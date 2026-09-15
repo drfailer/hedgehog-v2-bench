@@ -1,5 +1,5 @@
-#ifndef GPU_DGEMM_PIPELINE_V2_CUDA_UTILS_HPP
-#define GPU_DGEMM_PIPELINE_V2_CUDA_UTILS_HPP
+#ifndef GPU_COMMON_CUDA_UTILS_HPP
+#define GPU_COMMON_CUDA_UTILS_HPP
 
 #include <iostream>
 #include <cstdlib>

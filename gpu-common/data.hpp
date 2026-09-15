@@ -1,5 +1,5 @@
-#ifndef GPU_DGEMM_V2_DATA_HPP
-#define GPU_DGEMM_V2_DATA_HPP
+#ifndef GPU_COMMON_DATA_HPP
+#define GPU_COMMON_DATA_HPP
 
 #include <iostream>
 #include <memory>
@@ -12,8 +12,6 @@
 #include "cuda_utils.hpp"
 
 enum class Order { Row, Column };
-
-// Full matrix wrapper ////////////////////////////////////////////////////////
 
 template <class Type, char Id = '0', Order Ord = Order::Row>
 class MatrixData {
@@ -49,8 +47,6 @@ class MatrixData {
         return os;
     }
 };
-
-// CPU matrix block (view into full matrix) ///////////////////////////////////
 
 template <class Type, char Id, Order Ord>
 class MatrixBlockData {
@@ -112,8 +108,6 @@ class MatrixBlockData {
     Type *block_data() const { return block_data_; }
 };
 
-// GPU matrix block (pool-allocated device memory) ////////////////////////////
-
 template <class Type, char Id>
 struct CudaMatrixBlockData {
     size_t row_idx_ = 0;
@@ -123,15 +117,21 @@ struct CudaMatrixBlockData {
     size_t ld_ = 0;
     Type *device_data_ = nullptr;
     Type *host_full_data_ = nullptr;
+    int device_id_ = 0;
 
     CudaMatrixBlockData() = default;
 
-    explicit CudaMatrixBlockData(size_t block_size) {
+    CudaMatrixBlockData(size_t block_size, int device_id = 0)
+        : device_id_(device_id) {
+        CUDA_CHECK(cudaSetDevice(device_id));
         CUDA_CHECK(cudaMalloc(reinterpret_cast<void **>(&device_data_), sizeof(Type) * block_size * block_size));
     }
 
     ~CudaMatrixBlockData() {
-        if (device_data_) cudaFree(device_data_);
+        if (device_data_) {
+            cudaSetDevice(device_id_);
+            cudaFree(device_data_);
+        }
     }
 
     CudaMatrixBlockData(CudaMatrixBlockData const &) = delete;
@@ -165,7 +165,6 @@ struct CudaMatrixBlockData {
     }
 };
 
-// Helper: wrap a pool-allocated pointer in shared_ptr with release-back deleter
 template <class Type, char Id>
 auto pool_wrap(CudaMatrixBlockData<Type, Id> *raw,
                std::shared_ptr<hh::Pool<CudaMatrixBlockData<Type, Id>>> pool) {
