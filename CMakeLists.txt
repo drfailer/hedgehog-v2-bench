@@ -1,8 +1,5 @@
 cmake_minimum_required(VERSION 3.16)
 
-set(CMAKE_CXX_COMPILER personal-g++)
-set(CMAKE_C_COMPILER personal-gcc)
-
 set(CMAKE_VERBOSE_MAKEFILE TRUE)
 
 project(hedgehog_benchmarks LANGUAGES CXX)
