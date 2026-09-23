@@ -21,6 +21,8 @@ class MatrixData {
     Type *data_ = nullptr;
 
   public:
+    MatrixData() = default;
+
     MatrixData(size_t height, size_t width, size_t block_size, Type *data)
         : height_(height), width_(width), block_size_(std::max(block_size, size_t(1))), data_(data) {
         num_blocks_rows_ = (height_ + block_size_ - 1) / block_size_;
