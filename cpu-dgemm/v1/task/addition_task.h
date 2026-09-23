@@ -42,8 +42,8 @@ class AdditionTask : public hh::AbstractTask<
  public:
   void execute(std::shared_ptr<std::pair<std::shared_ptr<MatrixBlockData<Type, 'c', Ord>>,
                                          std::shared_ptr<MatrixBlockData<Type, 'p', Ord>>>> ptr) override {
-    auto c = ptr->first;
-    auto p = ptr->second;
+    auto &c = ptr->first;
+    auto &p = ptr->second;
     assert(c->blockSizeWidth() == p->blockSizeWidth());
     assert(c->blockSizeHeight() == p->blockSizeHeight());
 
@@ -62,7 +62,7 @@ class AdditionTask : public hh::AbstractTask<
     }
 
     delete[] p->blockData();
-    this->addResult(c);
+    this->addResult(std::move(c));
   }
 
   std::shared_ptr<hh::AbstractTask<

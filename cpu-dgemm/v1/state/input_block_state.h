@@ -98,21 +98,19 @@ class InputBlockState : public hh::AbstractState<
 
  private:
   std::shared_ptr<MatrixBlockData<Type, 'a', Ord>> matrixA(size_t i, size_t j) {
-    std::shared_ptr<MatrixBlockData<Type, 'a', Ord>> res = nullptr;
-    if ((res = gridMatrixA_[i * gridSharedDimension_ + j])) {
-      ttlA_[i * gridSharedDimension_ + j] = ttlA_[i * gridSharedDimension_ + j] - 1;
-      if (ttlA_[i * gridSharedDimension_ + j] == 0) { gridMatrixA_[i * gridSharedDimension_ + j] = nullptr; }
-    }
-    return res;
+    auto &ref = gridMatrixA_[i * gridSharedDimension_ + j];
+    if (!ref) return nullptr;
+    ttlA_[i * gridSharedDimension_ + j] = ttlA_[i * gridSharedDimension_ + j] - 1;
+    if (ttlA_[i * gridSharedDimension_ + j] == 0) return std::move(ref);
+    return ref;
   }
 
   std::shared_ptr<MatrixBlockData<Type, 'b', Ord>> matrixB(size_t i, size_t j) {
-    std::shared_ptr<MatrixBlockData<Type, 'b', Ord>> res = nullptr;
-    if ((res = gridMatrixB_[i * gridWidthRight_ + j])) {
-      ttlB_[i * gridWidthRight_ + j] = ttlB_[i * gridWidthRight_ + j] - 1;
-      if (ttlB_[i * gridWidthRight_ + j] == 0) { gridMatrixB_[i * gridWidthRight_ + j] = nullptr; }
-    }
-    return res;
+    auto &ref = gridMatrixB_[i * gridWidthRight_ + j];
+    if (!ref) return nullptr;
+    ttlB_[i * gridWidthRight_ + j] = ttlB_[i * gridWidthRight_ + j] - 1;
+    if (ttlB_[i * gridWidthRight_ + j] == 0) return std::move(ref);
+    return ref;
   }
 
   void matrixA(std::shared_ptr<MatrixBlockData<Type, 'a', Ord>> blockA) {

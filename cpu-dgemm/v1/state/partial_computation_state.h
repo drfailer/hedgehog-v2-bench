@@ -110,7 +110,7 @@ class PartialComputationState
 
   std::shared_ptr<MatrixBlockData<Type, 'p', Ord>> partialProduct(size_t i, size_t j) {
     assert(isPAvailable(i, j));
-    std::shared_ptr<MatrixBlockData<Type, 'p', Ord>> p = gridPartialProduct_[i * gridWidthResults_ + j].back();
+    auto p = std::move(gridPartialProduct_[i * gridWidthResults_ + j].back());
     gridPartialProduct_[i * gridWidthResults_ + j].pop_back();
     return p;
   }
@@ -121,9 +121,7 @@ class PartialComputationState
 
   std::shared_ptr<MatrixBlockData<Type, 'c', Ord>> blockMatrixC(size_t i, size_t j) {
     assert(isCAvailable(i, j));
-    auto c = gridMatrixC_[i * gridWidthResults_ + j];
-    gridMatrixC_[i * gridWidthResults_ + j] = nullptr;
-    return c;
+    return std::move(gridMatrixC_[i * gridWidthResults_ + j]);
   }
 
   void blockMatrixC(std::shared_ptr<MatrixBlockData<Type, 'c', Ord>> c) {
