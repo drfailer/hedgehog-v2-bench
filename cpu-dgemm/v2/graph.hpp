@@ -153,7 +153,7 @@ struct ProductTask {
                 M, N, K, 1.0f,
                 a->block_data(), a->ld(),
                 b->block_data(), b->ld(),
-                0.0f,
+                1.0f,
                 buf, result->ld());
         } else if constexpr (std::is_same_v<Type, double>) {
             cblas_dgemm(
@@ -162,7 +162,7 @@ struct ProductTask {
                 M, N, K, 1.0,
                 a->block_data(), a->ld(),
                 b->block_data(), b->ld(),
-                0.0,
+                1.0,
                 buf, result->ld());
         }
 

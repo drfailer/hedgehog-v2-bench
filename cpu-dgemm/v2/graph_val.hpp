@@ -149,7 +149,7 @@ struct ProductTask {
                 M, N, K, 1.0f,
                 a.block_data(), a.ld(),
                 b.block_data(), b.ld(),
-                0.0f,
+                1.0f,
                 product->block_data(), product->ld());
         } else {
             cblas_dgemm(Ord == Order::Column ? CblasColMajor : CblasRowMajor,
@@ -157,7 +157,7 @@ struct ProductTask {
                 M, N, K, 1.0,
                 a.block_data(), a.ld(),
                 b.block_data(), b.ld(),
-                0.0,
+                1.0,
                 product->block_data(), product->ld());
         }
 
