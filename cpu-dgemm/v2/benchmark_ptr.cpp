@@ -47,17 +47,19 @@ int main(int argc, char **argv) {
     auto graph = make_dgemm_graph<Type, Ord>(
         n_blocks, m_blocks, p_blocks, block_size, product_threads, addition_threads);
 
+    graph->start();
+
     auto t0 = std::chrono::high_resolution_clock::now();
 
-    graph->start();
     graph->push_data(mat_a);
     graph->push_data(mat_b);
     graph->push_data(mat_c);
 
     auto result = std::get<0>(graph->get_result());
-    graph->stop();
 
     auto t1 = std::chrono::high_resolution_clock::now();
+
+    graph->stop();
     double elapsed = std::chrono::duration<double>(t1 - t0).count();
 
     double gflops = 2.0 * n * n * n / elapsed / 1e9;
