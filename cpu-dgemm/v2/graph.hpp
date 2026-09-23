@@ -24,7 +24,7 @@ struct RowTraversalTask {
     using inputs = hh::type_list<MatrixData<Type, Id, Ord>>;
     using outputs = hh::type_list<MatrixBlockData<Type, Id, Ord>>;
 
-    void execute(auto ctx, std::shared_ptr<MatrixData<Type, Id, Ord>> matrix) {
+    static void execute(auto ctx, std::shared_ptr<MatrixData<Type, Id, Ord>> matrix) {
         for (size_t i = 0; i < matrix->num_blocks_rows(); ++i) {
             for (size_t j = 0; j < matrix->num_blocks_cols(); ++j) {
                 ctx->push_result(
@@ -39,7 +39,7 @@ struct ColumnTraversalTask {
     using inputs = hh::type_list<MatrixData<Type, Id, Ord>>;
     using outputs = hh::type_list<MatrixBlockData<Type, Id, Ord>>;
 
-    void execute(auto ctx, std::shared_ptr<MatrixData<Type, Id, Ord>> matrix) {
+    static void execute(auto ctx, std::shared_ptr<MatrixData<Type, Id, Ord>> matrix) {
         for (size_t j = 0; j < matrix->num_blocks_cols(); ++j) {
             for (size_t i = 0; i < matrix->num_blocks_rows(); ++i) {
                 ctx->push_result(
@@ -105,23 +105,21 @@ struct InputMatcherTask {
 
   private:
     std::shared_ptr<MatrixBlockData<Type, 'a', Ord>> get_a(size_t i, size_t k) {
-        auto ptr = grid_a_[i * m_blocks_ + k];
-        if (ptr) {
-            --ttl_a_[i * m_blocks_ + k];
-            if (ttl_a_[i * m_blocks_ + k] == 0)
-                grid_a_[i * m_blocks_ + k] = nullptr;
-        }
-        return ptr;
+        auto &ref = grid_a_[i * m_blocks_ + k];
+        if (!ref) return nullptr;
+        --ttl_a_[i * m_blocks_ + k];
+        if (ttl_a_[i * m_blocks_ + k] == 0)
+            return std::move(ref);
+        return ref;
     }
 
     std::shared_ptr<MatrixBlockData<Type, 'b', Ord>> get_b(size_t k, size_t j) {
-        auto ptr = grid_b_[k * p_blocks_ + j];
-        if (ptr) {
-            --ttl_b_[k * p_blocks_ + j];
-            if (ttl_b_[k * p_blocks_ + j] == 0)
-                grid_b_[k * p_blocks_ + j] = nullptr;
-        }
-        return ptr;
+        auto &ref = grid_b_[k * p_blocks_ + j];
+        if (!ref) return nullptr;
+        --ttl_b_[k * p_blocks_ + j];
+        if (ttl_b_[k * p_blocks_ + j] == 0)
+            return std::move(ref);
+        return ref;
     }
 };
 
@@ -132,9 +130,7 @@ struct ProductTask {
     using inputs = hh::type_list<BlockPair<Type, Ord>>;
     using outputs = hh::type_list<MatrixBlockData<Type, 'p', Ord>>;
 
-    std::shared_ptr<ProductTask> copy() { return std::make_shared<ProductTask>(); }
-
-    void execute(auto ctx, std::shared_ptr<BlockPair<Type, Ord>> pair) {
+    static void execute(auto ctx, std::shared_ptr<BlockPair<Type, Ord>> pair) {
         auto &a = pair->first;
         auto &b = pair->second;
 
@@ -166,7 +162,7 @@ struct ProductTask {
                 buf, result->ld());
         }
 
-        ctx->push_result(result);
+        ctx->push_result(std::move(result));
     }
 };
 
@@ -211,7 +207,7 @@ struct PartialComputationTask {
             if (total_done_ == n_blocks_ * p_blocks_)
                 ctx->push_result(mat_c_);
         } else if (!grid_p_[idx].empty()) {
-            auto p = grid_p_[idx].back();
+            auto p = std::move(grid_p_[idx].back());
             grid_p_[idx].pop_back();
             ++done_count_[idx];
             ctx->push_result(std::make_shared<AccumulationPair<Type, Ord>>(c, p));
@@ -224,8 +220,7 @@ struct PartialComputationTask {
         size_t idx = p->row_idx() * p_blocks_ + p->col_idx();
 
         if (grid_c_[idx]) {
-            auto c = grid_c_[idx];
-            grid_c_[idx] = nullptr;
+            auto c = std::move(grid_c_[idx]);
             ++done_count_[idx];
             ctx->push_result(std::make_shared<AccumulationPair<Type, Ord>>(c, p));
         } else {
@@ -241,9 +236,7 @@ struct AdditionTask {
     using inputs = hh::type_list<AccumulationPair<Type, Ord>>;
     using outputs = hh::type_list<MatrixBlockData<Type, 'c', Ord>>;
 
-    std::shared_ptr<AdditionTask> copy() { return std::make_shared<AdditionTask>(); }
-
-    void execute(auto ctx, std::shared_ptr<AccumulationPair<Type, Ord>> pair) {
+    static void execute(auto ctx, std::shared_ptr<AccumulationPair<Type, Ord>> pair) {
         auto &c = pair->first;
         auto &p = pair->second;
 
@@ -258,7 +251,7 @@ struct AdditionTask {
         }
 
         delete[] p->block_data();
-        ctx->push_result(c);
+        ctx->push_result(std::move(c));
     }
 };
 
