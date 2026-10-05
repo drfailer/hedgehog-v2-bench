@@ -1,0 +1,62 @@
+digraph {
+rankdir=TB;
+labelloc=tl;
+label="DGEMM-TBB"; fontsize=25; penwidth=5; labelloc=top; labeljust=left;
+node_140095648 [label="", width=.1, shape=circle];
+sink_140095648 [label="", width=.1, shape=point];
+node_140034688 [shape=none, margin=0, label=<<table border="0" cellborder="1" cellspacing="0" cellpadding="5">
+<tr><td><b>TraversalA</b></td></tr>
+</table>>];
+node_140036032 [shape=none, margin=0, label=<<table border="0" cellborder="1" cellspacing="0" cellpadding="5">
+<tr><td><b>TraversalB</b></td></tr>
+</table>>];
+node_140037440 [shape=none, margin=0, label=<<table border="0" cellborder="1" cellspacing="0" cellpadding="5">
+<tr><td><b>TraversalC</b></td></tr>
+</table>>];
+node_140043712 [shape=none, margin=0, label=<<table border="0" cellborder="1" cellspacing="0" cellpadding="5">
+<tr><td><b>InputMatcher</b></td></tr>
+</table>>];
+node_140045632 [shape=none, margin=0, label=<<table border="0" cellborder="1" cellspacing="0" cellpadding="5">
+<tr><td><b>Product x40</b></td></tr>
+</table>>];
+node_140072960 [shape=none, margin=0, label=<<table border="0" cellborder="1" cellspacing="0" cellpadding="5">
+<tr><td><b>PartialComputation</b></td></tr>
+</table>>];
+node_140092992 [shape=none, margin=0, label=<<table border="0" cellborder="1" cellspacing="0" cellpadding="5">
+<tr><td><b>Addition x40</b></td></tr>
+</table>>];
+node_140034688 -> edge_0 [dir=none];
+edge_0[shape=rect, style=filled, fillcolor="#ffffff", label="MatrixBlockData<double, 'a', Order::Column>"];
+edge_0 -> node_140043712;
+node_140036032 -> edge_1 [dir=none];
+edge_1[shape=rect, style=filled, fillcolor="#ffffff", label="MatrixBlockData<double, 'b', Order::Column>"];
+edge_1 -> node_140043712;
+node_140037440 -> edge_2 [dir=none];
+edge_2[shape=rect, style=filled, fillcolor="#ffffff", label="MatrixBlockData<double, 'c', Order::Column>"];
+edge_2 -> node_140072960;
+node_140043712 -> edge_3 [dir=none];
+edge_3[shape=rect, style=filled, fillcolor="#ffffff", label="std::pair<std::shared_ptr<MatrixBlockData<double, 'a', Order::Column> >, std::shared_ptr<MatrixBlockData<double, 'b', Order::Column> > >"];
+edge_3 -> node_140045632;
+node_140045632 -> edge_4 [dir=none];
+edge_4[shape=rect, style=filled, fillcolor="#ffffff", label="MatrixBlockData<double, 'p', Order::Column>"];
+edge_4 -> node_140072960;
+node_140072960 -> edge_5 [dir=none];
+edge_5[shape=rect, style=filled, fillcolor="#ffffff", label="std::pair<std::shared_ptr<MatrixBlockData<double, 'c', Order::Column> >, std::shared_ptr<MatrixBlockData<double, 'p', Order::Column> > >"];
+edge_5 -> node_140092992;
+node_140092992 -> edge_6 [dir=none];
+edge_6[shape=rect, style=filled, fillcolor="#ffffff", label="MatrixBlockData<double, 'c', Order::Column>"];
+edge_6 -> node_140072960;
+node_140095648 -> edge_7 [dir=none];
+edge_7[shape=rect, style=filled, fillcolor="#ffffff", label="MatrixData<double, 'a', Order::Column>"];
+edge_7 -> node_140034688;
+node_140095648 -> edge_8 [dir=none];
+edge_8[shape=rect, style=filled, fillcolor="#ffffff", label="MatrixData<double, 'b', Order::Column>"];
+edge_8 -> node_140036032;
+node_140095648 -> edge_9 [dir=none];
+edge_9[shape=rect, style=filled, fillcolor="#ffffff", label="MatrixData<double, 'c', Order::Column>"];
+edge_9 -> node_140037440;
+node_140095648 -> edge_10 [dir=none];
+edge_10[shape=rect, style=filled, fillcolor="#ffffff", label="MatrixData<double, 'c', Order::Column>"];
+edge_10 -> node_140072960;
+node_140072960 -> sink_140095648;
+}
