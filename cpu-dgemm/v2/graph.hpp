@@ -129,6 +129,7 @@ template <class Type, Order Ord>
 struct ProductTask {
     using inputs = hh::type_list<BlockPair<Type, Ord>>;
     using outputs = hh::type_list<MatrixBlockData<Type, 'p', Ord>>;
+    using node_input = hh::MoodycamelMPMCInput<BlockPair<Type, Ord>>;
 
     static void execute(auto ctx, std::shared_ptr<BlockPair<Type, Ord>> pair) {
         auto &a = pair->first;
@@ -177,6 +178,7 @@ struct PartialComputationTask {
     using outputs = hh::type_list<
         AccumulationPair<Type, Ord>,
         MatrixData<Type, 'c', Ord>>;
+    using node_input = hh::DakingMPSCInput<MatrixData<Type, 'c', Ord>, MatrixBlockData<Type, 'c', Ord>, MatrixBlockData<Type, 'p', Ord>>;
 
     size_t n_blocks_, p_blocks_, m_blocks_;
     size_t total_done_ = 0;
@@ -235,6 +237,7 @@ template <class Type, Order Ord>
 struct AdditionTask {
     using inputs = hh::type_list<AccumulationPair<Type, Ord>>;
     using outputs = hh::type_list<MatrixBlockData<Type, 'c', Ord>>;
+    // using node_input = hh::MoodycamelMPMCInput<AccumulationPair<Type, Ord>>;
 
     static void execute(auto ctx, std::shared_ptr<AccumulationPair<Type, Ord>> pair) {
         auto &c = pair->first;

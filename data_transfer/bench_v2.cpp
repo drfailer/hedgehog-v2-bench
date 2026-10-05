@@ -1,6 +1,7 @@
+#include <memory>
+#include <optional>
 #include <hedgehog/hedgehog.h>
 #include <chrono>
-#include <memory>
 #include <string>
 #include <vector>
 #include "bench_common.hpp"
@@ -16,10 +17,31 @@ struct PassthroughTask {
     }
 };
 
-auto make_transfer_graph(size_t n_tasks, size_t n_threads) {
-    auto graph = hh::make_graph<1, TransferData, TransferData>("Transfer v2");
+struct MoodycamelCondTask {
+    using inputs = hh::type_list<TransferData>;
+    using outputs = hh::type_list<TransferData>;
+    using node_input = hh::MoodycamelMPMCInput<TransferData>;
 
-    auto first_task = hh::make_task<PassthroughTask>(n_threads, "Task_0");
+    static void execute(auto ctx, std::shared_ptr<TransferData> data) {
+        ctx->push_result(std::move(data));
+    }
+};
+
+struct MoodycamelAtomicTask {
+    using inputs = hh::type_list<TransferData>;
+    using outputs = hh::type_list<TransferData>;
+    using node_input = hh::MoodycamelAtomicInput<TransferData>;
+
+    static void execute(auto ctx, std::shared_ptr<TransferData> data) {
+        ctx->push_result(std::move(data));
+    }
+};
+
+template <typename TaskImpl>
+auto make_transfer_graph(size_t n_tasks, size_t n_threads, std::string name) {
+    auto graph = hh::make_graph<1, TransferData, TransferData>(name);
+
+    auto first_task = hh::make_task<TaskImpl>(n_threads, "Task_0");
     using TaskNodeT = decltype(first_task);
 
     std::vector<TaskNodeT> tasks;
@@ -27,7 +49,7 @@ auto make_transfer_graph(size_t n_tasks, size_t n_threads) {
     tasks.push_back(std::move(first_task));
     for (size_t i = 1; i < n_tasks; ++i) {
         tasks.push_back(
-            hh::make_task<PassthroughTask>(n_threads, "Task_" + std::to_string(i)));
+            hh::make_task<TaskImpl>(n_threads, "Task_" + std::to_string(i)));
     }
 
     graph->connect_inputs(tasks[0]);
@@ -39,12 +61,11 @@ auto make_transfer_graph(size_t n_tasks, size_t n_threads) {
     return graph;
 }
 
-} // anonymous namespace
-
-BenchResult bench_v2_transfer(size_t n_tasks, size_t n_threads, size_t ndata) {
+template <typename TaskImpl>
+BenchResult run_bench(size_t n_tasks, size_t n_threads, size_t ndata, std::string name) {
     using clock = std::chrono::high_resolution_clock;
 
-    auto graph = make_transfer_graph(n_tasks, n_threads);
+    auto graph = make_transfer_graph<TaskImpl>(n_tasks, n_threads, name);
     graph->start();
 
     std::vector<double> per_data_ns;
@@ -75,4 +96,18 @@ BenchResult bench_v2_transfer(size_t n_tasks, size_t n_threads, size_t ndata) {
     graph->stop();
 
     return {global_ns, per_data_ns};
+}
+
+} // anonymous namespace
+
+BenchResult bench_v2_transfer(size_t n_tasks, size_t n_threads, size_t ndata) {
+    return run_bench<PassthroughTask>(n_tasks, n_threads, ndata, "v2 default");
+}
+
+BenchResult bench_v2_moodycamel_cond_transfer(size_t n_tasks, size_t n_threads, size_t ndata) {
+    return run_bench<MoodycamelCondTask>(n_tasks, n_threads, ndata, "v2 moodycamel+cond");
+}
+
+BenchResult bench_v2_moodycamel_atomic_transfer(size_t n_tasks, size_t n_threads, size_t ndata) {
+    return run_bench<MoodycamelAtomicTask>(n_tasks, n_threads, ndata, "v2 moodycamel+atomic");
 }

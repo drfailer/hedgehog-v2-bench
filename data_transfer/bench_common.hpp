@@ -41,5 +41,7 @@ constexpr size_t NUM_REPS = 10;
 
 BenchResult bench_v1_transfer(size_t n_tasks, size_t n_threads, size_t ndata);
 BenchResult bench_v2_transfer(size_t n_tasks, size_t n_threads, size_t ndata);
+BenchResult bench_v2_moodycamel_cond_transfer(size_t n_tasks, size_t n_threads, size_t ndata);
+BenchResult bench_v2_moodycamel_atomic_transfer(size_t n_tasks, size_t n_threads, size_t ndata);
 
 #endif

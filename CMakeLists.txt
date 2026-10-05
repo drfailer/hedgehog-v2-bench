@@ -9,6 +9,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 add_subdirectory(cpu-dgemm/v1)
 add_subdirectory(cpu-dgemm/v2)
+add_subdirectory(cpu-dgemm/v2-tbb)
+add_subdirectory(data_transfer)
 add_subdirectory(gpu-dgemm/v1)
 add_subdirectory(gpu-dgemm/v2)
 add_subdirectory(gpu-dgemm-pipeline/v1)

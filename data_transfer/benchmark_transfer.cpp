@@ -72,7 +72,13 @@ int main(int argc, char **argv) {
     print_results("Hedgehog v1", res_v1, n_tasks);
 
     auto res_v2 = bench_v2_transfer(n_tasks, n_threads, ndata);
-    print_results("Hedgehog v2", res_v2, n_tasks);
+    print_results("Hedgehog v2 (default)", res_v2, n_tasks);
+
+    auto res_mc_cond = bench_v2_moodycamel_cond_transfer(n_tasks, n_threads, ndata);
+    print_results("Hedgehog v2 (moodycamel+cond)", res_mc_cond, n_tasks);
+
+    auto res_mc_atomic = bench_v2_moodycamel_atomic_transfer(n_tasks, n_threads, ndata);
+    print_results("Hedgehog v2 (moodycamel+atomic)", res_mc_atomic, n_tasks);
 
     return 0;
 }
