@@ -3,7 +3,6 @@
 #include <cstdio>
 #include <cstdlib>
 
-#include "hedgehog/impl/graph/tbb/tbb_runner.hpp"
 #include "../v2/graph.hpp"
 
 template <class Type, Order Ord>
