@@ -27,6 +27,6 @@ if (NOT TBB_FOUND)
 endif()
 
 add_executable(benchmark_v2_tbb benchmark_tbb.cpp)
-target_include_directories(benchmark_v2_tbb PRIVATE ${CMAKE_SOURCE_DIR}/../../../hedgehog-v2)
+target_include_directories(benchmark_v2_tbb PRIVATE ${CMAKE_SOURCE_DIR}/../hedgehog-v2)
 target_link_libraries(benchmark_v2_tbb Threads::Threads ${BLAS_LIBRARIES} TBB::tbb)
 target_compile_definitions(benchmark_v2_tbb PRIVATE HH_ENABLE_TBB HH_ENABLE_PROFILING)
