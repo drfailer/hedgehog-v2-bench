@@ -20,19 +20,18 @@ auto make_gpu_inner_graph(size_t n, size_t m, size_t p, size_t block_size,
     pool_p->fill(product_threads + 4, block_size, device_id);
 
     auto copy_in_a = hh::make_task(
-        std::make_shared<CudaCopyInTask<Type, 'a'>>(block_size, n, pool_a, device_id), 1, "CopyInA");
+        std::make_shared<CudaCopyInTask<Type, 'a'>>(block_size, n, pool_a), 1, "CopyInA");
     auto copy_in_b = hh::make_task(
-        std::make_shared<CudaCopyInTask<Type, 'b'>>(block_size, m, pool_b, device_id), 1, "CopyInB");
+        std::make_shared<CudaCopyInTask<Type, 'b'>>(block_size, m, pool_b), 1, "CopyInB");
 
     auto matcher = hh::make_state_manager(
         std::make_shared<CudaInputMatcherTask<Type>>(n_blocks, m_blocks, p_blocks),
         "InputMatcher");
 
     auto product = hh::make_task(
-        std::make_shared<CudaProductTask<Type>>(pool_p, device_id), product_threads, "CudaProduct");
+        std::make_shared<CudaProductTask<Type>>(pool_p), product_threads, "CudaProduct");
 
-    auto copy_out = hh::make_task(
-        std::make_shared<CudaCopyOutTask<Type>>(device_id), 1, "CopyOut");
+    auto copy_out = hh::make_task<CudaCopyOutTask<Type>>(1, "CopyOut");
 
     auto graph = hh::make_graph<2,
         MatrixBlockData<Type, 'a', Order::Column>,

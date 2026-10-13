@@ -48,37 +48,20 @@ struct ColumnTraversalTask {
 // CUDA copy-in task ///////////////////////////////////////////////////////////
 
 template <class Type, char Id>
-struct CudaCopyInTask {
+struct CudaCopyInTask : public hh::CudaTask {
     using inputs = hh::type_list<MatrixBlockData<Type, Id, Order::Column>>;
     using outputs = hh::type_list<CudaMatrixBlockData<Type, Id>>;
 
     size_t block_size_;
     size_t matrix_ld_;
-    int device_id_;
-    cudaStream_t stream_ = nullptr;
     std::shared_ptr<hh::Pool<CudaMatrixBlockData<Type, Id>>> pool_;
 
     CudaCopyInTask(size_t block_size, size_t matrix_ld,
-                   std::shared_ptr<hh::Pool<CudaMatrixBlockData<Type, Id>>> pool,
-                   int device_id = 0)
-        : block_size_(block_size), matrix_ld_(matrix_ld),
-          device_id_(device_id), pool_(std::move(pool)) {}
-
-    ~CudaCopyInTask() {
-        if (stream_) cudaStreamDestroy(stream_);
-    }
-
-    void initialize() {
-        CUDA_CHECK(cudaSetDevice(device_id_));
-        CUDA_CHECK(cudaStreamCreate(&stream_));
-    }
-
-    void finalize() {
-        if (stream_) { cudaStreamDestroy(stream_); stream_ = nullptr; }
-    }
+                   std::shared_ptr<hh::Pool<CudaMatrixBlockData<Type, Id>>> pool)
+        : block_size_(block_size), matrix_ld_(matrix_ld), pool_(std::move(pool)) {}
 
     std::shared_ptr<CudaCopyInTask> copy() {
-        return std::make_shared<CudaCopyInTask>(block_size_, matrix_ld_, pool_, device_id_);
+        return std::make_shared<CudaCopyInTask>(block_size_, matrix_ld_, pool_);
     }
 
     void execute(auto ctx, std::shared_ptr<MatrixBlockData<Type, Id, Order::Column>> ptr) {
@@ -95,7 +78,7 @@ struct CudaCopyInTask {
             CUDA_CHECK(cudaMemcpyAsync(
                 block->device_data(), ptr->block_data(),
                 sizeof(Type) * block->block_height() * block->block_width(),
-                cudaMemcpyHostToDevice, stream_));
+                cudaMemcpyHostToDevice, stream()));
         } else {
             CUDA_CHECK(cublasSetMatrixAsync(
                 (int)block->block_height(), (int)block->block_width(), sizeof(Type),
@@ -103,10 +86,10 @@ struct CudaCopyInTask {
                     + IDX2C(ptr->row_idx() * block_size_,
                             ptr->col_idx() * block_size_, matrix_ld_),
                 (int)matrix_ld_,
-                block->device_data(), (int)block->ld(), stream_));
+                block->device_data(), (int)block->ld(), stream()));
         }
 
-        CUDA_CHECK(cudaStreamSynchronize(stream_));
+        CUDA_CHECK(cudaStreamSynchronize(stream()));
         ctx->push_result(std::move(block));
     }
 };
@@ -186,38 +169,27 @@ struct CudaInputMatcherTask {
 // CUDA product task ///////////////////////////////////////////////////////////
 
 template <class Type>
-struct CudaProductTask {
+struct CudaProductTask : public hh::CudaTask {
     using inputs = hh::type_list<CudaBlockPair<Type>>;
     using outputs = hh::type_list<CudaMatrixBlockData<Type, 'p'>>;
 
-    int device_id_;
-    cudaStream_t stream_ = nullptr;
     cublasHandle_t handle_ = nullptr;
     std::shared_ptr<hh::Pool<CudaMatrixBlockData<Type, 'p'>>> pool_;
 
-    CudaProductTask(std::shared_ptr<hh::Pool<CudaMatrixBlockData<Type, 'p'>>> pool,
-                    int device_id = 0)
-        : device_id_(device_id), pool_(std::move(pool)) {}
+    explicit CudaProductTask(std::shared_ptr<hh::Pool<CudaMatrixBlockData<Type, 'p'>>> pool)
+        : pool_(std::move(pool)) {}
 
-    ~CudaProductTask() {
-        if (handle_) cublasDestroy_v2(handle_);
-        if (stream_) cudaStreamDestroy(stream_);
-    }
-
-    void initialize() {
-        CUDA_CHECK(cudaSetDevice(device_id_));
-        CUDA_CHECK(cudaStreamCreate(&stream_));
+    void initialize_cuda() override {
         CUDA_CHECK(cublasCreate_v2(&handle_));
-        CUDA_CHECK(cublasSetStream_v2(handle_, stream_));
+        CUDA_CHECK(cublasSetStream_v2(handle_, stream()));
     }
 
-    void finalize() {
+    void finalize_cuda() override {
         if (handle_) { cublasDestroy_v2(handle_); handle_ = nullptr; }
-        if (stream_) { cudaStreamDestroy(stream_); stream_ = nullptr; }
     }
 
     std::shared_ptr<CudaProductTask> copy() {
-        return std::make_shared<CudaProductTask>(pool_, device_id_);
+        return std::make_shared<CudaProductTask>(pool_);
     }
 
     void execute(auto ctx, std::shared_ptr<CudaBlockPair<Type>> pair) {
@@ -252,7 +224,7 @@ struct CudaProductTask {
                 res->device_data(), (int)res->ld()));
         }
 
-        CUDA_CHECK(cudaStreamSynchronize(stream_));
+        CUDA_CHECK(cudaStreamSynchronize(stream()));
         ctx->push_result(std::move(res));
     }
 };
@@ -260,34 +232,16 @@ struct CudaProductTask {
 // CUDA copy-out task //////////////////////////////////////////////////////////
 
 template <class Type>
-struct CudaCopyOutTask {
+struct CudaCopyOutTask : public hh::CudaTask {
     using inputs = hh::type_list<CudaMatrixBlockData<Type, 'p'>>;
     using outputs = hh::type_list<MatrixBlockData<Type, 'p', Order::Column>>;
 
-    int device_id_;
-    cudaStream_t stream_ = nullptr;
-
-    explicit CudaCopyOutTask(int device_id = 0) : device_id_(device_id) {}
-
-    ~CudaCopyOutTask() {
-        if (stream_) cudaStreamDestroy(stream_);
-    }
-
-    void initialize() {
-        CUDA_CHECK(cudaSetDevice(device_id_));
-        CUDA_CHECK(cudaStreamCreate(&stream_));
-    }
-
-    void finalize() {
-        if (stream_) { cudaStreamDestroy(stream_); stream_ = nullptr; }
-    }
-
     std::shared_ptr<CudaCopyOutTask> copy() {
-        return std::make_shared<CudaCopyOutTask>(device_id_);
+        return std::make_shared<CudaCopyOutTask>();
     }
 
     void execute(auto ctx, std::shared_ptr<CudaMatrixBlockData<Type, 'p'>> ptr) {
-        auto result = ptr->copy_to_host(stream_);
+        auto result = ptr->copy_to_host(stream());
         ctx->push_result(std::move(result));
     }
 };
