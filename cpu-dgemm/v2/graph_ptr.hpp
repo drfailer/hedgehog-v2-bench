@@ -1,10 +1,10 @@
 #ifndef TUTORIAL4_GRAPH_PTR_HPP
 #define TUTORIAL4_GRAPH_PTR_HPP
 
-#include <cblas.h>
 #include <hedgehog/hedgehog.h>
 #include "data.hpp"
 #include "product_block.hpp"
+#include "../blas.hpp"
 
 template <class Type, Order Ord>
 using BlockPair = std::pair<

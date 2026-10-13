@@ -3,7 +3,7 @@
 #include <cstdlib>
 #include <cmath>
 #include <cstring>
-#include <cblas.h>
+#include "../blas.hpp"
 
 #include "graph_val.hpp"
 

@@ -4,6 +4,12 @@ set(CMAKE_VERBOSE_MAKEFILE TRUE)
 
 project(hedgehog_benchmarks LANGUAGES CXX)
 
+option(USE_OPENBLAS "Include <openblas/cblas.h> instead of <cblas.h>" OFF)
+
+if (USE_OPENBLAS)
+    add_compile_definitions(-DUSE_OPENBLAS)
+endif (USE_OPENBLAS)
+
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 

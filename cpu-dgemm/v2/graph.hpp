@@ -1,8 +1,8 @@
 #ifndef TUTORIAL4_GRAPH_HPP
 #define TUTORIAL4_GRAPH_HPP
 
-#include <cblas.h>
 #include <hedgehog/hedgehog.h>
+#include "../blas.hpp"
 #include "data.hpp"
 
 // Type aliases ////////////////////////////////////////////////////////////////

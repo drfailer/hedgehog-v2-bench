@@ -1,9 +1,9 @@
 #ifndef TUTORIAL4_GRAPH_VAL_HPP
 #define TUTORIAL4_GRAPH_VAL_HPP
 
-#include <cblas.h>
 #include <optional>
 #include <hedgehog/hedgehog.h>
+#include "../blas.hpp"
 #include "data.hpp"
 #include "product_block.hpp"
 
